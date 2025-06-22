@@ -1,30 +1,39 @@
 import numpy as np
-from abc import ABC, abstractmethod
-from tarea1.experiment.optimizer import Optimizer
+from rafael_nn.optimizer import Optimizer
+from numpy.typing import NDArray # Import NDArray from numpy.typing
+from rafael_nn.acfn import ActivationFunction
 
-class Layer(ABC):
-    @abstractmethod
+class Linear:
+    weights: NDArray[np.float64]
+    fn: ActivationFunction
+
+    def __init__(self,prev:int, neurons:int, fn:ActivationFunction):
+        # using this function we initialize the weights for the current layer
+        self.weights = np.fromfunction(fn.init_sample,(neurons,prev),dtype=float)
+        self.fn = fn
+
     def forward(self, input: np.ndarray) -> np.ndarray:
-        pass
+        # forward pass. We just multiply the input vector by the matrix weights.R Returns a vector
+        return self.fn(self.weights @ input)
 
-    @abstractmethod
     def backward(self, grad_output: np.ndarray) -> np.ndarray:
         pass
 
-    @abstractmethod
     def update_params(self, optimizer: Optimizer, layer_index: int) -> None:
         pass
 
 
 class NeuralNetwork:
-    def __init__(self):
-        self.layers: list[Layer] = []
-
-    def add(self, layer: Layer) -> None:
-        pass
+    def __init__(self, layers:list[Linear], optimizer:Optimizer):
+        self.layers = layers
+        self.optimizer = optimizer
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        pass
+        current = x
+        for layer in self.layers:
+            current = layer.forward(current)
+
+        return current
 
     def backward(self, loss_grad: np.ndarray) -> None:
         pass
