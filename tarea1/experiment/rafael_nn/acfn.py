@@ -15,10 +15,6 @@ class ActivationFunction(ABC):
     def init_sample(self) -> np.float64:
         pass
 
-    @abstractmethod
-    def backward(self, x: FloatArr) -> FloatArr:
-        pass
-
 # since the best initialization depends on the activation function. We delegate that to its class
 class ReLU(ActivationFunction):
     def __call__(self,x:FloatArr):
@@ -26,7 +22,4 @@ class ReLU(ActivationFunction):
 
     def init_sample(self) -> np.float64:
         return np.float64(np.random.normal(loc=0, scale=2 / self.n))
-
-    def backward(self,x:FloatArr):
-        return x.clip(0)
 
