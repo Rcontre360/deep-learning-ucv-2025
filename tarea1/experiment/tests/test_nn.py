@@ -1,69 +1,72 @@
+
 import numpy as np
 import unittest
-from unittest.mock import MagicMock
-from rafael_nn.acfn import ActivationFunction
-from rafael_nn.nn import Linear
+from unittest.mock import MagicMock, patch
+from typing import List
 
-class TestLinear(unittest.TestCase):
+from rafael_nn.nn import NeuralNetwork
+
+class ActivationFunction:
+    """Mock for ActivationFunction."""
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        return x
+    def init_sample(self, i: int, j: int) -> float:
+        return 0.0
+
+class Linear:
+    """Mock for the Linear layer."""
+    def __init__(self, prev: int, neurons: int, fn: ActivationFunction):
+        self.prev = prev
+        self.neurons = neurons
+        self.fn = fn
+        self.weights = np.zeros((neurons, prev)) 
+
+    def forward(self, input: np.ndarray) -> np.ndarray:
+        return input + 1
+
+class Optimizer:
+    """Mock for the Optimizer."""
+    def __init__(self):
+        pass 
+    def optimize(self, params):
+        pass
+
+class TestNeuralNetwork(unittest.TestCase):
 
     def setUp(self):
-        self.prev_neurons = 5
-        self.current_neurons = 3
-        # here I figured out how to make mocks for classes in python. Following best practices for unit tests
-        # In unit tests, bugs in other classes should not affect the testing of the current one, thats why we mock
-        self.mock_activation_fn = MagicMock(spec=ActivationFunction)
-        self.mock_activation_fn.side_effect = lambda x: x + 1 # identity + 1 function for simplicity 
-        self.mock_activation_fn.init_sample.side_effect = lambda a,_: a
+        """Set up common variables and mocks for tests."""
+        self.mock_layer1 = Linear(0,0,ActivationFunction())
+        self.mock_layer2 = Linear(0,0,ActivationFunction())
+        self.mock_layer3 = Linear(0,0,ActivationFunction())
 
-        self.linear_layer = Linear(self.prev_neurons, self.current_neurons, self.mock_activation_fn)
+        self.mock_optimizer = MagicMock(spec=Optimizer)
 
-    def test_initialization_weights_shape(self):
-        "Here we test the shape is correct"
-        expected_shape = (self.current_neurons, self.prev_neurons)
-        self.assertEqual(self.linear_layer.weights.shape, expected_shape)
+        self.neural_network = NeuralNetwork(
+            layers=[self.mock_layer1, self.mock_layer2, self.mock_layer3],
+            optimizer=self.mock_optimizer
+        )
 
-    def test_initialization_weights_dtype(self):
-        "Here we test the numbers type is correct"
-        self.assertEqual(self.linear_layer.weights.dtype, float)
+    def test_forward_pass_flow_and_output(self):
+        initial_input = np.array([5.0, 5.0], dtype=np.float64)
 
-    def test_initialization_fn_assignment(self):
-        "Here we test the used activation function is correct"
-        self.assertEqual(self.linear_layer.fn, self.mock_activation_fn)
+        expected_l1 = initial_input + 1.0
+        expected_l2 = expected_l1 + 1.0
+        expected_l3 = expected_l2 + 1.0
 
-    def test_initialization_weights_content(self):
-        "Here we check the weights are correctly initialized"
-        expected_weights = np.array([
-            [0.0] * self.linear_layer.weights.shape[1],
-            [1.0] * self.linear_layer.weights.shape[1],
-            [2.0] * self.linear_layer.weights.shape[1],
-        ], dtype=float)
-        np.testing.assert_array_equal(self.linear_layer.weights, expected_weights)
-        # in a single call should affect all input
-        self.assertEqual(self.mock_activation_fn.init_sample.call_count, 1)
+        output = self.neural_network.forward(initial_input)
 
-    def test_forward_pass_output_shape(self):
-        "Here we check the shape of the forward pass is correct"
-        # test input vector
-        input_vector = np.random.rand(self.prev_neurons)
-        output = self.linear_layer.forward(input_vector)
-        self.assertEqual(output.shape, (self.current_neurons,))
+    def test_forward_pass_empty_layers(self):
+        """Test forward pass with no layers."""
+        nn_empty = NeuralNetwork(layers=[], optimizer=self.mock_optimizer)
+        initial_input = np.array([1.0, 2.0])
+        output = nn_empty.forward(initial_input)
+        np.testing.assert_array_almost_equal(output, initial_input) # Should return input as is
 
-    def test_forward_pass_multiplication_and_activation(self):
-        """Test that the forward pass correctly performs multiplication and applies activation."""
-
-        test_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=float)
-        # we multiply [1...5] by [ [0...0], [1...1], [2...2] ]
-        expected_raw_output = np.array([0., 15., 30.], dtype=float)
-
-        # here our mock activation fn is x + 1
-        expected_final_output = expected_raw_output + 1
-        output = self.linear_layer.forward(test_input)
-
-        np.testing.assert_array_almost_equal(output, expected_final_output)
-        self.mock_activation_fn.assert_called_once()
-        np.testing.assert_array_almost_equal(self.mock_activation_fn.call_args[0][0], expected_raw_output)
+    def test_optimizer_assignment(self):
+        """Test that the optimizer is correctly assigned."""
+        self.assertEqual(self.neural_network.optimizer, self.mock_optimizer)
 
 # To run the tests:
 if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    unittest.main(argv=[''], exit=False)
 

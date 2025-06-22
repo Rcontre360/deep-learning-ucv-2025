@@ -1,26 +1,32 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
+from rafael_nn.common import FloatArr
+
 class ActivationFunction(ABC):
     def __init__(self, n:int):
         self.n = n
 
     @abstractmethod
-    def init_sample(self, n:int) -> float:
+    def __call__(self,x:FloatArr) -> FloatArr:
         pass
 
     @abstractmethod
-    def backward(self, x: np.ndarray) -> np.ndarray:
+    def init_sample(self) -> np.float64:
+        pass
+
+    @abstractmethod
+    def backward(self, x: FloatArr) -> FloatArr:
         pass
 
 # since the best initialization depends on the activation function. We delegate that to its class
 class ReLU(ActivationFunction):
-    def __call__(self,x:np.ndarray):
+    def __call__(self,x:FloatArr):
         return x.clip(0)
 
-    def init_sample(self):
-        return np.random.normal(loc=0, scale=2 / self.n)
+    def init_sample(self) -> np.float64:
+        return np.float64(np.random.normal(loc=0, scale=2 / self.n))
 
-    def backward(self,x:np.ndarray):
+    def backward(self,x:FloatArr):
         return x.clip(0)
 
