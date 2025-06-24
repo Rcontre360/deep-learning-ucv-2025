@@ -26,6 +26,11 @@ class TestLinear(unittest.TestCase):
         "Here we test the numbers type is correct"
         self.assertEqual(self.linear_layer.weights.dtype, float)
 
+    def test_initialization_biases_shape(self):
+        "Here we test the biases shape is correct"
+        expected_shape = (self.current_neurons,)
+        self.assertEqual(self.linear_layer.biases.shape, expected_shape)
+
     def test_initialization_fn_assignment(self):
         "Here we test the used activation function is correct"
         self.assertEqual(self.linear_layer.fn, self.mock_activation_fn)
@@ -40,6 +45,11 @@ class TestLinear(unittest.TestCase):
         np.testing.assert_array_equal(self.linear_layer.weights, expected_weights)
         # in a single call should affect all input
         self.assertEqual(self.mock_activation_fn.init_sample.call_count, self.current_neurons * self.prev_neurons)
+
+    def test_initialization_biases_content(self):
+        "Here we check the biases are correctly initialized"
+        expected_biases = np.array([0] * self.linear_layer.weights.shape[0], dtype=float)
+        np.testing.assert_array_equal(self.linear_layer.biases, expected_biases)
 
     def test_forward_pass_output_shape(self):
         "Here we check the shape of the forward pass is correct"

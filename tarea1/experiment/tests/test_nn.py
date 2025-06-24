@@ -55,6 +55,8 @@ class TestNeuralNetwork(unittest.TestCase):
 
         output = self.neural_network.forward(initial_input)
 
+        np.testing.assert_array_equal(output, expected_l3)
+
     def test_forward_pass_empty_layers(self):
         """Test forward pass with no layers."""
         nn_empty = NeuralNetwork(layers=[], optimizer=self.mock_optimizer)

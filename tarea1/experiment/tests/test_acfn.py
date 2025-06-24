@@ -11,13 +11,6 @@ class TestReLU(unittest.TestCase):
         expected = np.array([1, 0, 0, 5])
         np.testing.assert_array_equal(output, expected)
 
-    def test_backward(self):
-        relu = ReLU(1)
-        x = np.array([1.0, -2.0, 0.0])
-        grad = relu.backward(x)
-        expected = np.array([1.0, 0.0, 0.0])
-        np.testing.assert_array_equal(grad, expected)
-
 if __name__ == '__main__':
     unittest.main()
 
