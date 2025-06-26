@@ -1,14 +1,13 @@
+from abc import ABC, abstractmethod
 from typing import Optional
 import numpy as np
 from numpy.typing import NDArray # Import NDArray from numpy.typing
 
 from rafael_nn.acfn import ActivationFunction
 from rafael_nn.common import FloatArr
-from rafael_nn.lossfn import LossFunction
 from rafael_nn.optimizer import Optimizer
 
-class Linear:
-    # think that float32 would also do the trick
+class Layer(ABC):
     weights: NDArray[np.float64]
     biases: NDArray[np.float64]
     fn: ActivationFunction
@@ -17,6 +16,18 @@ class Linear:
     f: FloatArr
     h: FloatArr
 
+    @abstractmethod
+    def __call__(self, input: FloatArr) -> tuple[FloatArr,FloatArr]:
+        """Compute the loss value."""
+        pass
+
+    @abstractmethod
+    def backward(self, prediction: FloatArr, target: FloatArr) -> FloatArr:
+        """Compute the gradient of the loss with respect to the prediction."""
+        pass
+
+
+class Linear(Layer):
     def __init__(self,prev:int, neurons:int, fn:ActivationFunction):
         """Initializes linear layer with weights. Initializes biases with 0"""
         weights = [[fn.init_sample() for _ in range(prev)] for _ in range(neurons)]

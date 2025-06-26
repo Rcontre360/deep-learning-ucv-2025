@@ -2,19 +2,19 @@ import numpy as np
 from numpy.typing import NDArray
 from rafael_nn.common import FloatArr
 
-from rafael_nn.layer import Linear
+from rafael_nn.layer import Layer
 from rafael_nn.lossfn import LossFunction
 from rafael_nn.optimizer import Optimizer
 
 class NeuralNetwork:
     # I like adding types. Its easier to know that what im doing will work, also easier to debug
     # want to update this to use functional programming
-    layers: list[Linear]
+    layers: list[Layer]
     optimizer:Optimizer
     layers_output: list[NDArray[np.float64]]
     loss_fn:LossFunction
 
-    def __init__(self, layers:list[Linear], optimizer:Optimizer, loss_fn:LossFunction):
+    def __init__(self, layers:list[Layer], optimizer:Optimizer, loss_fn:LossFunction):
         self.layers = layers
         self.optimizer = optimizer
         self.loss_fn = loss_fn
@@ -30,26 +30,22 @@ class NeuralNetwork:
         if loss < err:
             return
 
-        gradients = self._backward(final, target)
-        self.weights = self.optimizer(self.weights, gradients)
-
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        return self._forward(x)
+        _,_,dl_w = self._backward(final, target)
+        # self.optimizer(self.weights, dl_w)
 
     # this is almos the same implementation as the 7_2 notebook
-    def _forward(self, x: np.ndarray, train=False) -> tuple[FloatArr, list[FloatArr], list[FloatArr]]:
-        current = x
+    def _forward(self, x: np.ndarray) -> tuple[FloatArr, list[FloatArr], list[FloatArr]]:
         all_h, all_f = [], []
         for i in range(len(self.layers)):
             layer = self.layers[i]
-            h, f = layer(current)
-            if train:
-                all_h.append(h)
-                all_f.append(f)
+            h, f = layer(x if i == 0 else all_h[i-1])
 
-        return current, all_h, all_f
+            all_h.append(h)
+            all_f.append(f)
 
-    def _backward(self, prediction:FloatArr, target:FloatArr) -> None:
+        return all_h[-1], all_h, all_f
+
+    def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[FloatArr,FloatArr,FloatArr]:
         dl_b, prev_dl_f, dl_w = self.layers[-1].backward(self.loss_fn.backward(prediction,target))
 
         for i in range(len(self.layers) - 1,-1,-1):
