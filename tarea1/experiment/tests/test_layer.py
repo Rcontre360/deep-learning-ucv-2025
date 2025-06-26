@@ -55,7 +55,7 @@ class TestLinear(unittest.TestCase):
         "Here we check the shape of the forward pass is correct"
         # test input vector
         input_vector = np.random.rand(self.prev_neurons)
-        output = self.linear_layer.forward(input_vector)
+        output = self.linear_layer(input_vector)
         self.assertEqual(output.shape, (self.current_neurons,))
 
     def test_forward_pass_multiplication_and_activation(self):
@@ -67,7 +67,7 @@ class TestLinear(unittest.TestCase):
 
         # here our mock activation fn is x + 1
         expected_final_output = expected_raw_output + 1
-        output = self.linear_layer.forward(test_input)
+        output = self.linear_layer(test_input)
 
         np.testing.assert_array_almost_equal(output, expected_final_output)
         self.mock_activation_fn.assert_called_once()

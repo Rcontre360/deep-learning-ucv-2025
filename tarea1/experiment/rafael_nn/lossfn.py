@@ -6,7 +6,7 @@ from rafael_nn.common import FloatArr
 
 class LossFunction(ABC):
     @abstractmethod
-    def forward(self, prediction: FloatArr, target: FloatArr) -> float:
+    def __call__(self, prediction: FloatArr, target: FloatArr) -> float:
         """Compute the loss value."""
         pass
 
@@ -16,7 +16,7 @@ class LossFunction(ABC):
         pass
 
 class MeanSquaredError(LossFunction):
-    def forward(self, prediction: FloatArr, target: FloatArr) -> np.floating[Any]:
+    def __call__(self, prediction: FloatArr, target: FloatArr) -> np.floating[Any]:
         return np.mean((prediction - target) ** 2)
 
     def backward(self, prediction: FloatArr, target: FloatArr) -> FloatArr:
