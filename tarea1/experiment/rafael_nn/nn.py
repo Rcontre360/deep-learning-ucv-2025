@@ -46,10 +46,11 @@ class NeuralNetwork:
         return all_h[-1], all_h, all_f
 
     def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[FloatArr,FloatArr,FloatArr]:
-        dl_b, prev_dl_f, dl_w = self.layers[-1].backward(self.loss_fn.backward(prediction,target))
+        dl_b, prev_dl_f, dl_w = self.layers[-1].backward(prev_dl_f=self.loss_fn.backward(prediction,target))
 
-        for i in range(len(self.layers) - 1,-1,-1):
-            prev_w = self.layers[i+1].weights.T
+        for i in range(len(self.layers) - 2,-1,-1):
+            # here had an anoying error because prev_w was already transposed on this line
+            prev_w = self.layers[i+1].weights
             dl_b, prev_dl_f, dl_w = self.layers[i].backward(prev_w.T @ prev_dl_f)
 
         return dl_b, prev_dl_f, dl_w

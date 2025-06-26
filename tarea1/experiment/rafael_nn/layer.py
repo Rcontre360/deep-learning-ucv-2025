@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray # Import NDArray from numpy.typing
 
-from rafael_nn.acfn import ActivationFunction
+from rafael_nn.acfn import ActivationFunction, ReLU
 from rafael_nn.common import FloatArr
 from rafael_nn.optimizer import Optimizer
 
@@ -12,7 +12,6 @@ class Layer(ABC):
     biases: NDArray[np.float64]
     fn: ActivationFunction
 
-    called: bool
     f: FloatArr
     h: FloatArr
 
@@ -22,27 +21,39 @@ class Layer(ABC):
         pass
 
     @abstractmethod
-    def backward(self, prediction: FloatArr, target: FloatArr) -> FloatArr:
+    def backward(self, prev_dl_f:Optional[FloatArr] = None, weights_dl_f: Optional[FloatArr] = None) -> tuple[FloatArr,FloatArr,FloatArr]:
         """Compute the gradient of the loss with respect to the prediction."""
         pass
 
+    # for debugging, helped a lot when building backpropagation
+    def __str__(self):
+        return "Unknown"
+
+    def __repr__(self):
+        return "Unknown"
 
 class Linear(Layer):
-    def __init__(self,prev:int, neurons:int, fn:ActivationFunction):
+    prev:int
+    neurons:int
+
+    def __init__(self,prev:int, neurons:int, fn:Optional[ActivationFunction] = None):
         """Initializes linear layer with weights. Initializes biases with 0"""
-        weights = [[fn.init_sample() for _ in range(prev)] for _ in range(neurons)]
+        self.fn = ReLU(neurons) if fn is None else fn
+        weights = [[self.fn.init_sample() for _ in range(prev)] for _ in range(neurons)]
         biases = [0 for _ in range(neurons)]
 
+        self.prev = prev
+        self.neurons = neurons
         self.weights = np.array(weights, dtype=np.float64)
         self.biases = np.array(biases, dtype=np.float64)
-        self.fn = fn
 
-    def __call__(self, input: NDArray[np.float64]) -> tuple[FloatArr, FloatArr]:
+    def __call__(self, input: FloatArr) -> tuple[FloatArr, FloatArr]:
         """Applies the forward pass. Multiplies the given vector by the matrix weights and applies the activation fn"""
-        self.called = True
         # we need the preactivation for the gradient calc
-        prev = self.biases + self.weights @ input
-        return self.fn(prev), prev
+        self.f = self.biases + self.weights @ input
+        self.h = self.fn(self.f)
+
+        return self.h, self.f
 
     def backward(self, prev_dl_f:Optional[FloatArr] = None, weights_dl_f: Optional[FloatArr] = None) -> tuple[FloatArr,FloatArr,FloatArr]:
         """
@@ -50,10 +61,6 @@ class Linear(Layer):
         if prev_dl_f is passed, this means this is the LAST layer and the first to calculate dl_f. 
         if weights_dl_f is passed, it means this is a hidden layer
         """
-
-        if not self.called:
-            raise Exception("Layer must be called before getting derivatives")
-
         if prev_dl_f is None:
             dl_f = np.where(self.f > 0, 1, 0)*weights_dl_f
         else:
@@ -62,8 +69,9 @@ class Linear(Layer):
         # dl_bias, dl_f and dl_weight
         return dl_f, dl_f, np.matmul(dl_f, self.h.T)
 
+    def __str__(self):
+        return f"Linear({self.prev},{self.neurons})"
 
-
-    def update_params(self, optimizer: Optimizer, layer_index: int) -> None:
-        pass
+    def __repr__(self):
+        return f"Linear({self.prev},{self.neurons})"
 
