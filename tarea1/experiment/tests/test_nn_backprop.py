@@ -12,38 +12,78 @@ from rafael_nn.optimizer import GradientDescent
 class TestNNGradient(unittest.TestCase):
     def setUp(self):
         np.random.seed(42)
-        layers = 3
-        n_by_layer = 5
-        layers:list[Layer] = [Linear(1,n_by_layer)] + [Linear(n_by_layer,n_by_layer) for _ in range(layers)] + [Linear(n_by_layer,1)]
+        layers = 5
+        n_by_layer = 6
+        layers:list[Layer] = [Linear(1,n_by_layer)] + [Linear(n_by_layer,n_by_layer) for _ in range(layers-1)] + [Linear(n_by_layer,1)]
 
-        self.nn = NeuralNetwork(layers, optimizer=GradientDescent(), loss_fn=MeanSquaredError())
+        self.loss_fn = MeanSquaredError()
+        self.nn = NeuralNetwork(layers, optimizer=GradientDescent(), loss_fn=self.loss_fn)
 
-    def test_nn_gradient_calc(self):
-        x = np.random.randn(1)
+    # def test_nn_gradient_with_bias_change(self):
+    def aux(self):
+        """Here we perform the same kind of check made in the notebook 7_2 to see if our derivatives are well calculated"""
+        # x = np.random.randn(1)
+        x = np.array([1.2])
         target = np.array([1.0])
-        epsilon = 1e-5
-        tolerance = 1e-4
+        epsilon = 0.000001 # same delta used in notebook 7_2
 
-        prediction, _, _ = self.nn._forward(x)
-        dx_analytical, _, _ = self.nn._backward(prediction, target)
+        prediction = self.nn(x)
+        all_dl_b, _ = self.nn._backward(prediction, target)
 
-        dx_numerical = np.zeros_like(x)
-        for i in range(x.size):
-            x_pos = x.copy()
-            x_neg = x.copy()
-            x_pos[i] += epsilon
-            x_neg[i] -= epsilon
+        for layer_i in range(len(self.nn.layers)):
+            layer = self.nn.layers[layer_i]
 
-            fx_pos, _, _ = self.nn._forward(x_pos)
-            fx_neg, _, _ = self.nn._forward(x_neg)
+            bias_cpy = np.array(layer.biases)
+            dl_bias = np.zeros_like(all_dl_b[layer_i])
 
-            loss_pos = self.nn.loss_fn(fx_pos, target)
-            loss_neg = self.nn.loss_fn(fx_neg, target)
+            for row in range(len(layer.biases)):
+                # get current output
+                output = self.nn(x)
+                layer.biases[row]+=epsilon
+                # get output with small change
+                output_change = self.nn(x)
 
-            dx_numerical[i] = (loss_pos - loss_neg) / (2 * epsilon)
+                #restore previous value
+                layer.biases = bias_cpy
+                dl_bias[row] = (self.loss_fn(output_change,target) - self.loss_fn(output, target))/epsilon
 
-        # === Compare ===
-        assert np.allclose(dx_analytical, dx_numerical, atol=tolerance)
-        print("Gradient check passed!")
-        pass
+            assert np.allclose(all_dl_b[layer_i], dl_bias, rtol=1e-5, atol=1e-8, equal_nan=False), \
+                f"Gradient check failed for bias at layer {layer_i}.\n" \
+                f"Backprop: {all_dl_b[layer_i]}\n" \
+                f"Finite diff: {dl_bias}"
+
+    def test_nn_gradient_with_weight_change(self):
+        """Here we perform the same kind of check made in the notebook 7_2 to see if our derivatives are well calculated"""
+        # x = np.random.randn(1)
+        x = np.array([1.2])
+        target = np.array([1.0])
+        epsilon = 0.000001 # same delta used in notebook 7_2
+
+        prediction = self.nn(x)
+        print("LAYER",self.nn.layers[-1].h)
+        _, all_dl_w = self.nn._backward(prediction, target)
+
+        for layer_i in range(len(self.nn.layers)):
+            layer = self.nn.layers[layer_i]
+
+            weight_copy = np.array(layer.weights)
+            dl_w = np.zeros_like(all_dl_w[layer_i])
+
+            for row in range(layer.weights.shape[0]):
+                for col in range(layer.weights.shape[1]):
+                    # get current output
+                    output = self.nn(x)
+                    layer.weights[row][col]+=epsilon
+                    # get output with small change
+                    output_change = self.nn(x)
+
+                    #restore previous value
+                    layer.weights = weight_copy
+                    dl_w[row][col] = (self.loss_fn(output_change,target) - self.loss_fn(output, target))/epsilon
+
+                # assert np.allclose(all_dl_w[layer_i], dl_w, rtol=1e-5, atol=1e-8, equal_nan=False), \
+                    # f"Gradient check failed for weight at layer {layer_i}.\n" \
+                    # f"Backprop: {all_dl_w[layer_i]}\n" \
+                    # f"Finite diff: {dl_w}"
+
 

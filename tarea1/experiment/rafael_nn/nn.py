@@ -6,6 +6,8 @@ from rafael_nn.layer import Layer
 from rafael_nn.lossfn import LossFunction
 from rafael_nn.optimizer import Optimizer
 
+np.random.seed(42)
+
 class NeuralNetwork:
     # I like adding types. Its easier to know that what im doing will work, also easier to debug
     # want to update this to use functional programming
@@ -30,8 +32,11 @@ class NeuralNetwork:
         if loss < err:
             return
 
-        _,_,dl_w = self._backward(final, target)
+        _,dl_w = self._backward(final, target)
         # self.optimizer(self.weights, dl_w)
+
+    def backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
+        return self._backward(prediction,target)
 
     # this is almos the same implementation as the 7_2 notebook
     def _forward(self, x: np.ndarray) -> tuple[FloatArr, list[FloatArr], list[FloatArr]]:
@@ -45,15 +50,22 @@ class NeuralNetwork:
 
         return all_h[-1], all_h, all_f
 
-    def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[FloatArr,FloatArr,FloatArr]:
-        dl_b, prev_dl_f, dl_w = self.layers[-1].backward(prev_dl_f=self.loss_fn.backward(prediction,target))
+    def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
+        layers_n = len(self.layers)
+        all_dl_bias, all_dl_weights = [0] * layers_n, [0] * layers_n
 
-        for i in range(len(self.layers) - 2,-1,-1):
+        dl_b, prev_dl_f, dl_w = self.layers[-1].backward(prev_dl_f=self.loss_fn.backward(prediction,target))
+        all_dl_bias[-1] = dl_b
+        all_dl_weights[-1] = dl_w
+
+        for i in range(layers_n - 2,-1,-1):
             # here had an anoying error because prev_w was already transposed on this line
             prev_w = self.layers[i+1].weights
-            dl_b, prev_dl_f, dl_w = self.layers[i].backward(prev_w.T @ prev_dl_f)
+            dl_b, prev_dl_f, dl_w = self.layers[i].backward(weights_dl_f=prev_w.T @ prev_dl_f)
+            all_dl_bias[i] = dl_b
+            all_dl_weights[i] = dl_w
 
-        return dl_b, prev_dl_f, dl_w
+        return all_dl_bias, all_dl_weights
 
     def update(self, optimizer: Optimizer) -> None:
         pass

@@ -40,7 +40,8 @@ class Linear(Layer):
         """Initializes linear layer with weights. Initializes biases with 0"""
         self.fn = ReLU(neurons) if fn is None else fn
         weights = [[self.fn.init_sample() for _ in range(prev)] for _ in range(neurons)]
-        biases = [0 for _ in range(neurons)]
+        # TODO, output is 0 if bias is 0. need to check this
+        biases = [self.fn.init_sample() for _ in range(neurons)]
 
         self.prev = prev
         self.neurons = neurons
@@ -67,7 +68,8 @@ class Linear(Layer):
             dl_f = prev_dl_f
 
         # dl_bias, dl_f and dl_weight
-        return dl_f, dl_f, np.matmul(dl_f, self.h.T)
+        print("shapes",dl_f.shape, self.h.shape)
+        return dl_f, dl_f, dl_f@self.h.T
 
     def __str__(self):
         return f"Linear({self.prev},{self.neurons})"
