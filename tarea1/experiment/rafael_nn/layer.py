@@ -49,7 +49,7 @@ class Linear(Layer):
         weights = [[self.fn.init_sample() for _ in range(prev)] for _ in range(neurons)]
         # TODO, output is 0 if bias is 0. need to check this
         #bug: before I was initializing biases with shape (6,). This was causing issues when added. It turned the vector into a matrix
-        biases = [[self.fn.init_sample()] for _ in range(neurons)]
+        biases = [[0] for _ in range(neurons)]
 
         self.prev = prev
         self.neurons = neurons

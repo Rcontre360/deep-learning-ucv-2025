@@ -24,16 +24,20 @@ class NeuralNetwork:
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return self._forward(x)[0]
 
-    def train(self, x: np.ndarray, target:np.ndarray, epochs = 1000, err = 1e-4):
-        # here we determine WHEN to stop but the optimizer tells us the next step
-        final, all_h, all_f = self._forward(x, True)
-        loss = self.loss_fn(final,target)
+    def train(self, x: FloatArr, target:FloatArr, epochs = 1000, err = 1e-4):
+        cur_err = np.inf
+        i = 0
+        while epochs > 0 and cur_err > err:
+            final = self(x[i])
+            cur_err = self.loss_fn(final,target[i])
+            all_dl_bias,all_dl_weights = self._backward(final, target[i])
 
-        if loss < err:
-            return
-
-        _,dl_w = self._backward(final, target)
-        # self.optimizer(self.weights, dl_w)
+            print("ERROR",cur_err)
+            for i in range(len(self.layers)):
+                layer = self.layers[i]
+                layer.biases = self.optimizer(layer.biases,all_dl_bias[i])
+                layer.weights = self.optimizer(layer.weights,all_dl_weights[i])
+            i+=1
 
     def backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
         return self._backward(prediction,target)
@@ -57,7 +61,7 @@ class NeuralNetwork:
 
     def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
         layers_n = len(self.layers)
-        all_dl_bias, all_dl_weights = [0] * layers_n, [0] * layers_n
+        all_dl_bias, all_dl_weights = [None] * layers_n, [None] * layers_n
 
         dl_b, prev_dl_f, dl_w = self.layers[-1].backward(prev_dl_f=self.loss_fn.backward(prediction,target))
         all_dl_bias[-1] = dl_b
