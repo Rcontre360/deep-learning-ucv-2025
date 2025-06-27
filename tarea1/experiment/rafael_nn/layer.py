@@ -32,6 +32,13 @@ class Layer(ABC):
     def __repr__(self):
         return "Unknown"
 
+# NOTE: I had a design issue. Each layer was storing its preactivation and activation values.
+# but for the first layer the activation value is the input. Because this should be the activation that happened on the PREVIOUS layer
+# my design had these values stored on the layer they were executed, 
+# so the first layer h value was the first execution of the activation function. And the last one didnt had one
+
+# NOTE: to solve the issue above, just added 'h' as the input value the layer received when called on the forward pass
+
 class Linear(Layer):
     prev:int
     neurons:int
@@ -41,7 +48,8 @@ class Linear(Layer):
         self.fn = ReLU(neurons) if fn is None else fn
         weights = [[self.fn.init_sample() for _ in range(prev)] for _ in range(neurons)]
         # TODO, output is 0 if bias is 0. need to check this
-        biases = [self.fn.init_sample() for _ in range(neurons)]
+        #bug: before I was initializing biases with shape (6,). This was causing issues when added. It turned the vector into a matrix
+        biases = [[self.fn.init_sample()] for _ in range(neurons)]
 
         self.prev = prev
         self.neurons = neurons
@@ -51,10 +59,10 @@ class Linear(Layer):
     def __call__(self, input: FloatArr) -> tuple[FloatArr, FloatArr]:
         """Applies the forward pass. Multiplies the given vector by the matrix weights and applies the activation fn"""
         # we need the preactivation for the gradient calc
-        self.f = self.biases + self.weights @ input
-        self.h = self.fn(self.f)
+        self.h = input
+        self.f = self.biases + self.weights@input
 
-        return self.h, self.f
+        return self.fn(self.f), self.f
 
     def backward(self, prev_dl_f:Optional[FloatArr] = None, weights_dl_f: Optional[FloatArr] = None) -> tuple[FloatArr,FloatArr,FloatArr]:
         """
@@ -68,7 +76,6 @@ class Linear(Layer):
             dl_f = prev_dl_f
 
         # dl_bias, dl_f and dl_weight
-        print("shapes",dl_f.shape, self.h.shape)
         return dl_f, dl_f, dl_f@self.h.T
 
     def __str__(self):

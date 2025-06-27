@@ -39,16 +39,21 @@ class NeuralNetwork:
         return self._backward(prediction,target)
 
     # this is almos the same implementation as the 7_2 notebook
-    def _forward(self, x: np.ndarray) -> tuple[FloatArr, list[FloatArr], list[FloatArr]]:
+    def _forward(self, x: FloatArr) -> tuple[FloatArr, list[FloatArr], list[FloatArr]]:
         all_h, all_f = [], []
-        for i in range(len(self.layers)):
+        # all layers but the last one apply activation fn
+        for i in range(len(self.layers) - 1):
             layer = self.layers[i]
             h, f = layer(x if i == 0 else all_h[i-1])
 
             all_h.append(h)
             all_f.append(f)
 
-        return all_h[-1], all_h, all_f
+        # last layer outputs result y
+        _,res = self.layers[-1](all_h[-1])
+        all_f.append(res)
+
+        return res, all_h, all_f
 
     def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
         layers_n = len(self.layers)

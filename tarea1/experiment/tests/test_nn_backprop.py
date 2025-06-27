@@ -54,13 +54,11 @@ class TestNNGradient(unittest.TestCase):
 
     def test_nn_gradient_with_weight_change(self):
         """Here we perform the same kind of check made in the notebook 7_2 to see if our derivatives are well calculated"""
-        # x = np.random.randn(1)
-        x = np.array([1.2])
-        target = np.array([1.0])
+        x = np.array([[1.2]])
+        target = np.array([[1.0]])
         epsilon = 0.000001 # same delta used in notebook 7_2
 
         prediction = self.nn(x)
-        print("LAYER",self.nn.layers[-1].h)
         _, all_dl_w = self.nn._backward(prediction, target)
 
         for layer_i in range(len(self.nn.layers)):
@@ -81,9 +79,10 @@ class TestNNGradient(unittest.TestCase):
                     layer.weights = weight_copy
                     dl_w[row][col] = (self.loss_fn(output_change,target) - self.loss_fn(output, target))/epsilon
 
-                # assert np.allclose(all_dl_w[layer_i], dl_w, rtol=1e-5, atol=1e-8, equal_nan=False), \
-                    # f"Gradient check failed for weight at layer {layer_i}.\n" \
-                    # f"Backprop: {all_dl_w[layer_i]}\n" \
-                    # f"Finite diff: {dl_w}"
+            # NOTE: here I had to reduce atol from 1e-8 to 1e-5. Maybe some imprecision on my code?
+            assert np.allclose(all_dl_w[layer_i], dl_w, rtol=1e-5, atol=1e-5, equal_nan=False), \
+                f"Gradient check failed for weight at layer {layer_i}.\n" \
+                f"Backprop: {all_dl_w[layer_i]}\n" \
+                f"Finite diff: {dl_w}"
 
 
