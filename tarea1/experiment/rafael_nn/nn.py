@@ -24,15 +24,18 @@ class NeuralNetwork:
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return self._forward(x)[0]
 
-    def train(self, x: FloatArr, target:FloatArr, epochs = 1000, err = 1e-4):
+    def train(self, x_full: FloatArr, y_full:FloatArr, epochs = 1000, err = 1e-4):
         cur_err = np.inf
         i = 0
-        while epochs > 0 and cur_err > err:
-            final = self(x[i])
-            cur_err = self.loss_fn(final,target[i])
-            all_dl_bias,all_dl_weights = self._backward(final, target[i])
+        while epochs > 0 and cur_err > err and i < len(x_full[0]):
+            target = np.array([[y_full[0][i]]])
+            x = np.array([[x_full[0][i]]])
 
-            print("ERROR",cur_err)
+            final = self(x)
+            cur_err = self.loss_fn(final,target)
+            all_dl_bias,all_dl_weights = self._backward(final, target)
+            print("CUR ERR",cur_err)
+
             for i in range(len(self.layers)):
                 layer = self.layers[i]
                 layer.biases = self.optimizer(layer.biases,all_dl_bias[i])
