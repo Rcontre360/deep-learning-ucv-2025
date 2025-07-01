@@ -26,17 +26,16 @@ class NeuralNetwork:
 
     def train(self, x_full: FloatArr, y_full:FloatArr, epochs = 1000, err = 1e-4):
         cur_err = np.inf
-        # while epochs > 0 and cur_err > err:
-        final = self(x_full)
-        cur_err = self.loss_fn(final,y_full)
-        all_dl_bias,all_dl_weights = self._backward(final, y_full)
+        while epochs > 0 and cur_err > err:
+            final = self(x_full)
+            cur_err = self.loss_fn(final,y_full)
+            all_dl_bias,all_dl_weights = self._backward(final, y_full)
 
-        print("bias",all_dl_bias[1].shape)
-        print("weights",all_dl_weights[1].shape)
-        for i in range(len(self.layers)):
-            layer = self.layers[i]
-            layer.biases = self.optimizer(layer.biases,all_dl_bias[i])
-            layer.weights = self.optimizer(layer.weights,all_dl_weights[i])
+            for i in range(len(self.layers)):
+                layer = self.layers[i]
+                layer.biases = self.optimizer(layer.biases,all_dl_bias[i])
+                layer.weights = self.optimizer(layer.weights,all_dl_weights[i])
+            epochs-=1
 
     def backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
         return self._backward(prediction,target)
