@@ -21,7 +21,6 @@ class TestNNGradient(unittest.TestCase):
     # def test_nn_gradient_with_bias_change(self):
     def test_nn_gradient_with_bias_change(self):
         """Here we perform the same kind of check made in the notebook 7_2 to see if our derivatives are well calculated"""
-        # x = np.random.randn(1)
         x = np.array([[1.2]])
         target = np.array([[1.0]])
         epsilon = 0.000001 # same delta used in notebook 7_2

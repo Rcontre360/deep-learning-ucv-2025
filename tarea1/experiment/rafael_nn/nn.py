@@ -26,21 +26,17 @@ class NeuralNetwork:
 
     def train(self, x_full: FloatArr, y_full:FloatArr, epochs = 1000, err = 1e-4):
         cur_err = np.inf
-        i = 0
-        while epochs > 0 and cur_err > err and i < len(x_full[0]):
-            target = np.array([[y_full[0][i]]])
-            x = np.array([[x_full[0][i]]])
+        # while epochs > 0 and cur_err > err:
+        final = self(x_full)
+        cur_err = self.loss_fn(final,y_full)
+        all_dl_bias,all_dl_weights = self._backward(final, y_full)
 
-            final = self(x)
-            cur_err = self.loss_fn(final,target)
-            all_dl_bias,all_dl_weights = self._backward(final, target)
-            print("CUR ERR",cur_err)
-
-            for i in range(len(self.layers)):
-                layer = self.layers[i]
-                layer.biases = self.optimizer(layer.biases,all_dl_bias[i])
-                layer.weights = self.optimizer(layer.weights,all_dl_weights[i])
-            i+=1
+        print("bias",all_dl_bias[1].shape)
+        print("weights",all_dl_weights[1].shape)
+        for i in range(len(self.layers)):
+            layer = self.layers[i]
+            layer.biases = self.optimizer(layer.biases,all_dl_bias[i])
+            layer.weights = self.optimizer(layer.weights,all_dl_weights[i])
 
     def backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
         return self._backward(prediction,target)
@@ -62,20 +58,22 @@ class NeuralNetwork:
 
         return res, all_h, all_f
 
+    # THIS IS AN IMPLEMENTATION OF GRADIENT DESCEND
     def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
         layers_n = len(self.layers)
-        all_dl_bias, all_dl_weights = [None] * layers_n, [None] * layers_n
+        all_dl_bias, all_dl_weights = [np.array([])] * layers_n, [np.array([])] * layers_n
 
         dl_b, prev_dl_f, dl_w = self.layers[-1].backward(prev_dl_f=self.loss_fn.backward(prediction,target))
         all_dl_bias[-1] = dl_b
         all_dl_weights[-1] = dl_w
 
-        for i in range(layers_n - 2,-1,-1):
+        for lay in range(layers_n - 2,-1,-1):
             # here had an anoying error because prev_w was already transposed on this line
-            prev_w = self.layers[i+1].weights
-            dl_b, prev_dl_f, dl_w = self.layers[i].backward(weights_dl_f=prev_w.T @ prev_dl_f)
-            all_dl_bias[i] = dl_b
-            all_dl_weights[i] = dl_w
+            prev_w = self.layers[lay+1].weights
+            dl_b, prev_dl_f, dl_w = self.layers[lay].backward(weights_dl_f=prev_w.T @ prev_dl_f)
+
+            all_dl_bias[lay] = dl_b
+            all_dl_weights[lay] = dl_w
 
         return all_dl_bias, all_dl_weights
 

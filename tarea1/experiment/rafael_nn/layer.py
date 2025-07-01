@@ -51,6 +51,8 @@ class Linear(Layer):
         #bug: before I was initializing biases with shape (6,). This was causing issues when added. It turned the vector into a matrix
         biases = [[0] for _ in range(neurons)]
 
+        self.h = None
+        self.f = None
         self.prev = prev
         self.neurons = neurons
         self.weights = np.array(weights, dtype=np.float64)
@@ -75,8 +77,10 @@ class Linear(Layer):
         else:
             dl_f = prev_dl_f
 
+        dl_bias = np.sum(dl_f, axis=1).reshape(dl_f.shape[0], 1)
+
         # dl_bias, dl_f and dl_weight
-        return dl_f, dl_f, dl_f@self.h.T
+        return dl_bias, dl_f, dl_f@self.h.T
 
     def __str__(self):
         return f"Linear({self.prev},{self.neurons})"
