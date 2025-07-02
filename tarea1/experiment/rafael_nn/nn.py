@@ -26,10 +26,14 @@ class NeuralNetwork:
 
     def train(self, x_full: FloatArr, y_full:FloatArr, epochs = 1000, err = 1e-4):
         cur_err = np.inf
+        self.optimizer.load_data(x_full,y_full)
+
         while epochs > 0 and cur_err > err:
-            final = self(x_full)
-            cur_err = self.loss_fn(final,y_full)
-            all_dl_bias,all_dl_weights = self._backward(final, y_full)
+            x, y = self.optimizer.get_batch()
+
+            final = self(x)
+            cur_err = self.loss_fn(final,y)
+            all_dl_bias,all_dl_weights = self._backward(final, y)
 
             for i in range(len(self.layers)):
                 layer = self.layers[i]
@@ -76,11 +80,3 @@ class NeuralNetwork:
 
         return all_dl_bias, all_dl_weights
 
-    def update(self, optimizer: Optimizer) -> None:
-        pass
-
-    def fit(self, X: np.ndarray, y: np.ndarray, epochs: int, batch_size: int, loss_fn, optimizer: Optimizer) -> None:
-        pass
-
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        pass

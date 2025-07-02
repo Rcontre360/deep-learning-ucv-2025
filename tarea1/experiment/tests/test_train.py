@@ -5,7 +5,7 @@ from rafael_nn.common import FloatArr
 from rafael_nn.layer import Linear
 from rafael_nn.lossfn import MeanSquaredError
 from rafael_nn.nn import NeuralNetwork
-from rafael_nn.optimizer import GradientDescent
+from rafael_nn.optimizer import GradientDescent, StochasticGradientDescend
 
 # This is the same toy function used in the example of backprop in understanding deep learning
 def teaching_function(beta: np.ndarray, omega: np.ndarray):
@@ -40,7 +40,7 @@ class TestNNTrain(unittest.TestCase):
 
         self.teaching_fn = teaching_function(beta,omega)
         self.loss_fn = MeanSquaredError()
-        self.nn = NeuralNetwork(layers, optimizer=GradientDescent(), loss_fn=self.loss_fn)
+        self.nn = NeuralNetwork(layers, optimizer=StochasticGradientDescend(), loss_fn=self.loss_fn)
 
     def test_train_correct_descend(self):
         x_train, y_train = create_dataset(10, self.teaching_fn)
