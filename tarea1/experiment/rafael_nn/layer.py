@@ -17,12 +17,10 @@ class Layer(ABC):
 
     @abstractmethod
     def __call__(self, input: FloatArr) -> tuple[FloatArr,FloatArr]:
-        """Compute the loss value."""
         pass
 
     @abstractmethod
     def backward(self, prev_dl_f:Optional[FloatArr] = None, weights_dl_f: Optional[FloatArr] = None) -> tuple[FloatArr,FloatArr,FloatArr]:
-        """Compute the gradient of the loss with respect to the prediction."""
         pass
 
     # for debugging, helped a lot when building backpropagation
@@ -59,7 +57,6 @@ class Linear(Layer):
         self.biases = np.array(biases, dtype=np.float64)
 
     def __call__(self, input: FloatArr) -> tuple[FloatArr, FloatArr]:
-        """Applies the forward pass. Multiplies the given vector by the matrix weights and applies the activation fn"""
         # we need the preactivation for the gradient calc
         self.h = input
         self.f = self.biases + self.weights@input
@@ -83,8 +80,10 @@ class Linear(Layer):
         return dl_bias, dl_f, dl_f@self.h.T
 
     def __str__(self):
+        """For debugging"""
         return f"Linear({self.prev},{self.neurons})"
 
     def __repr__(self):
+        """For debugging"""
         return f"Linear({self.prev},{self.neurons})"
 

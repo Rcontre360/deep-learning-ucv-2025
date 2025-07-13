@@ -17,14 +17,24 @@ class NeuralNetwork:
     loss_fn:LossFunction
 
     def __init__(self, layers:list[Layer], optimizer:Optimizer, loss_fn:LossFunction):
+        """
+        Initialization of the NN.
+        First argument are the list of layers.
+        The second argument is the optimizer and the third one the loss function.
+        """
         self.layers = layers
         self.optimizer = optimizer
         self.loss_fn = loss_fn
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
+        """Makes a forward pass and returns the y value"""
         return self._forward(x)[0]
 
     def train(self, x_full: FloatArr, y_full:FloatArr, epochs = 1000, err = 1e-4):
+        """
+        Trains the neural network. First two arguments is input data and expected result.
+        Then there is the epochs this train function will run and finally the error threshold.
+        """
         cur_err = np.inf
         self.optimizer.load_data(x_full,y_full)
 
@@ -42,6 +52,7 @@ class NeuralNetwork:
             epochs-=1
 
     def backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
+        """Backward pass, returns a tuple which are the derivatives given the biases and the weights"""
         return self._backward(prediction,target)
 
     # this is almos the same implementation as the 7_2 notebook
@@ -61,7 +72,6 @@ class NeuralNetwork:
 
         return res, all_h, all_f
 
-    # THIS IS AN IMPLEMENTATION OF GRADIENT DESCEND
     def _backward(self, prediction:FloatArr, target:FloatArr) -> tuple[list[FloatArr],list[FloatArr]]:
         layers_n = len(self.layers)
         all_dl_bias, all_dl_weights = [np.array([])] * layers_n, [np.array([])] * layers_n
