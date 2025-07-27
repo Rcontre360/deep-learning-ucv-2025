@@ -1,6 +1,9 @@
+
 # Rafael NN - Module Documentation
 
-This document provides detailed documentation for each module in the `rafael_nn` package, including class definitions, method signatures, and implementation details.
+This document provides detailed documentation for each module in the `rafael_nn` package, including class definitions, method signatures, and implementation details. 
+
+Most of our classes were built using a pattern of abstract classes first, the reason behind this is because we performed some unit testing during development. Adding unit tests on this kind of development was very useful, because many times we made changes that broke the operations behind some classes. This pattern also helps us define different kinds of layers, optimizers and activation functions with ease.
 
 ## Table of Contents
 
@@ -27,9 +30,7 @@ FloatArr: TypeAlias = NDArray[np.float64]
 
 ### Type Definitions
 
-- **`FloatArr`**: Type alias for `NDArray[np.float64]` - represents a NumPy array of 64-bit floating point numbers. This is the primary data type used for all numerical computations in the package.
-
----
+- **`FloatArr`**: Type alias for `NDArray[np.float64]` - represents a NumPy array of 64-bit floating point numbers. This is the primary data type used for all numerical computations in the package. Maybe we dont need float64 and with float32 was enough, but I didnt care about adding more performance until the library was ready.
 
 ## Activation Functions (`acfn.py`)
 
@@ -46,7 +47,7 @@ Abstract base class that defines the interface for all activation functions.
 def __init__(self, n: int)
 ```
 - **Parameters:**
-  - `n` (int): Number of neurons in the layer (used for weight initialization)
+  - `n` (int): Number of neurons in the layer (used for weight initialization). This parameter is necesary when calling init_sample, since the initialization will depend on the amount of neurons on that layer.
 
 **Abstract Methods:**
 
@@ -96,7 +97,7 @@ This module implements neural network layers with a focus on linear (fully conne
 
 #### `Layer(ABC)`
 
-Abstract base class defining the interface for all neural network layers.
+Abstract base class defining the interface for all neural network layers. We wanted to design each layer in such a way that we had access to the preactivation and activation values, as well as access to the "backward" or derivative of the function that represents the layer.
 
 **Attributes:**
 - `weights` (NDArray[np.float64]): Weight matrix for the layer
@@ -170,7 +171,7 @@ def backward(self, prev_dl_f: Optional[FloatArr] = None,
 
 ## Loss Functions (`lossfn.py`)
 
-This module implements loss functions for training neural networks.
+This module implements loss functions for training neural networks. We wanted to create a class for it because of consistency. 
 
 ### Abstract Base Class
 
@@ -218,7 +219,7 @@ def backward(self, prediction: FloatArr, target: FloatArr) -> FloatArr
 
 ## Optimizers (`optimizer.py`)
 
-This module implements optimization algorithms for training neural networks.
+This module implements optimization algorithms for training neural networks. I had some issues building this part of the library, mostly on the train function in the neural network class. Probably if this library gets more work done this class will change a lot.
 
 ### Abstract Base Class
 
@@ -324,7 +325,7 @@ This module contains the main neural network class that orchestrates training an
 
 #### `NeuralNetwork`
 
-Main neural network class that combines layers, optimizers, and loss functions.
+Main neural network class that combines layers, optimizers, and loss functions. Finishing the train function was the last challengue when building this experiment.
 
 **Constructor:**
 ```python
@@ -395,10 +396,9 @@ def _backward(self, prediction: FloatArr, target: FloatArr) -> tuple[list[FloatA
 **Key Design Features:**
 
 1. **Modular Architecture:** Clear separation between layers, optimizers, and loss functions
-2. **Gradient Flow:** Proper gradient computation and propagation through the network
-3. **Batch Processing:** Support for both full-batch and mini-batch training
-4. **Early Stopping:** Training stops when error threshold is reached
-5. **Type Safety:** Comprehensive type hints for better code reliability
+2. **Batch Processing:** Support for both full-batch and mini-batch training
+3. **Early Stopping:** Training stops when error threshold is reached
+4. **Type Safety:** Comprehensive type hints for better code reliability (I really like typed code)
 
 **Training Process:**
 1. Optimizer manages data batching and shuffling
@@ -408,4 +408,3 @@ def _backward(self, prediction: FloatArr, target: FloatArr) -> tuple[list[FloatA
 5. Optimizer updates parameters using computed gradients
 6. Process repeats until convergence or epoch limit
 
-The implementation follows a clean object-oriented design with proper separation of concerns, making it easy to extend with new layer types, optimizers, and loss functions.
